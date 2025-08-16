@@ -1,0 +1,47 @@
+name: CI/CD Database Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Wait for MySQL
+      run: |
+        sleep 30
+        sudo apt-get install -y mysql-client
+
+    - name: Run Initial Schema
+      run: mysql -h 127.0.0.1 -u root -prootpassword < sql/01_create_table.sql
+
+    - name: Run Schema Update
+      run: mysql -h 127.0.0.1 -u root -prootpassword < sql/02_add_humidity.sql
+
+    - name: Seed Data
+      run: mysql -h 127.0.0.1 -u root -prootpassword < sql/03_seed_data.sql
+
+    - name: Install Python Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install mysql-connector-python
+
+    - name: Run Concurrent Queries
+      run: python scripts/multi_thread_queries.py
