@@ -1,0 +1,12 @@
+services:
+  mysql:
+    image: mysql:8
+    container_name: mysql-logs
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: project_db
+    ports:
+      - "3308:3306"        # host:container
+    volumes:
+       - "./conf.d/my.cnf:/etc/mysql/conf.d/my.cnf:ro"
+       - "./logs:/var/log/mysql"
